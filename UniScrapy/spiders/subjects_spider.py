@@ -1,4 +1,5 @@
 import scrapy
+from UniScrapy.items import UniscrapyItem
 
 
 class SubjectsSpider(scrapy.Spider):
@@ -13,13 +14,16 @@ class SubjectsSpider(scrapy.Spider):
     def parse(self, response):
 
         name = response.css('title::text').get().split(' ')
-        yield {
-            # Extract the subject information
-            'subject': ' '.join(name[0:-7]),
-            'code': name[-7][1:-1],
-            'overview': response.css('div.course__overview-wrapper p::text').getall()[0],
-            'availability': response.css('div.course__overview-box table tr td div::text').getall()
-        }
+        sspost = UniscrapyItem()
+
+
+        # Extract the subject information
+        sspost['subject'] = ' '.join(name[0:-7])
+        sspost['code'] = name[-7][1:-1]
+        sspost['overview'] = response.css('div.course__overview-wrapper p::text').getall()[0]
+        sspost['availability'] = response.css('div.course__overview-box table tr td div::text').getall()
+
+        yield sspost
 
         # Get the 'eligibility and requirements page'
         next_page = response.css('div.layout-sidebar__side__inner ul li a::attr(href)').getall()[1]

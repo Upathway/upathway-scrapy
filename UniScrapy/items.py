@@ -11,4 +11,8 @@ import scrapy
 class UniscrapyItem(scrapy.Item):
     # define the fields for your item here like:
     # name = scrapy.Field()
-    pass
+    subject = scrapy.Field()
+    code = scrapy.Field()
+    overview = scrapy.Field()
+    availability = scrapy.Field()
+
