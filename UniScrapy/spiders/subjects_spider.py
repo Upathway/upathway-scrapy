@@ -8,7 +8,16 @@ class SubjectsSpider(scrapy.Spider):
         'https://handbook.unimelb.edu.au/2020/subjects/comp30022',
         'https://handbook.unimelb.edu.au/2020/subjects/comp30026',
         'https://handbook.unimelb.edu.au/2020/subjects/swen30006',
-        'https://handbook.unimelb.edu.au/2020/subjects/comp30023'
+        'https://handbook.unimelb.edu.au/2020/subjects/comp30023',
+        'https://handbook.unimelb.edu.au/2020/subjects/comp30027',
+        'https://handbook.unimelb.edu.au/2020/subjects/mast30025',
+        'https://handbook.unimelb.edu.au/2020/subjects/mast30027',
+        'https://handbook.unimelb.edu.au/2020/subjects/mast30034',
+        'https://handbook.unimelb.edu.au/2020/subjects/mast30021',
+        'https://handbook.unimelb.edu.au/2020/subjects/comp30028',
+        'https://handbook.unimelb.edu.au/2020/subjects/comp30001',
+        'https://handbook.unimelb.edu.au/2020/subjects/comp30030',
+        'https://handbook.unimelb.edu.au/2020/subjects/comp30031'
     ]
 
     def parse(self, response):
