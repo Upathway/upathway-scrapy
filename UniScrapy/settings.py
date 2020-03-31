@@ -16,7 +16,7 @@ NEWSPIDER_MODULE = 'UniScrapy.spiders'
 
 
 # Crawl responsibly by identifying yourself (and your website) on the user-agent
-#USER_AGENT = 'UniScrapy (+http://www.yourdomain.com)'
+USER_AGENT = 'Yunfei Jing (https://github.com/yunfeijing) for INFO30005 Project'
 
 # Obey robots.txt rules
 ROBOTSTXT_OBEY = False
@@ -90,5 +90,5 @@ ITEM_PIPELINES = {
 #HTTPCACHE_IGNORE_HTTP_CODES = []
 #HTTPCACHE_STORAGE = 'scrapy.extensions.httpcache.FilesystemCacheStorage'
 
-MONGO_URI = 'localhost'
+MONGO_URI = 'mongodb+srv://INFO30006GroupMember:ytxtUnxbuwBVhT02@info30005-kapqo.mongodb.net/test?authSource=admin&replicaSet=INFO30005-shard-0&readPreference=primary&appname=MongoDB%20Compass&ssl=true'
 MONGO_DATABASE = 'test'
