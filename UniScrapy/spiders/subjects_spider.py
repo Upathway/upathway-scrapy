@@ -16,7 +16,7 @@ class SubjectsSpider(scrapy.Spider):
 
         # join the links and then parse each subjects
         for subject in subjects_list:
-            yield response.follow(subject, callback=self.parseSubject)
+            yield response.follow(subject, callback=self.parseSubjectHome)
         
         next_page = response.urljoin(response.css("div#search-results div.search-context span.next a::attr(href)").get())
 
@@ -25,29 +25,83 @@ class SubjectsSpider(scrapy.Spider):
 
         
 
-    def parseSubject(self, response):
-
-        name = response.css('title::text').get().split(' ')
-
+    def parseSubjectHome(self, response):
+        
         sspost = UniscrapyItem()
-
         # Extract the subject information
+        name = response.css('title::text').get().split(' ')
+        
         sspost['subject'] = ' '.join(name[0:-7])
         sspost['code'] = name[-7][1:-1]
         sspost['overview'] = response.css('div.course__overview-wrapper p::text').getall()[0]
+
+        ILO = response.css('div#learning-outcomes ul li::text').getall()
+        if not ILO:
+            ILO = response.css('div#learning-outcomes ol li::text').getall()
+        sspost['ILO'] = ILO
+
+        
+        GS = response.css('div#generic-skills ul li::text').getall()
+        if not GS:
+            GS = response.css('div#generic-skills ol li::text').getall()
+        sspost["generic_skills"] = GS
+
         sspost['availability'] = response.css('div.course__overview-box table tr td div::text').getall()
 
+        # Get the 'eligibility and requirements page'
+        req_page = response.css('div.layout-sidebar__side__inner ul li a::attr(href)').getall()[1]
+
+        yield response.follow(req_page, self.parseSubjectReq, cb_kwargs=dict(sspost=sspost))
+
+
+
+    def parseSubjectReq(self, response, sspost):
+
+        sspost['prerequisites'] = response.css('div#prerequisites table tr td a::text').getall()
+
+        ass_page = response.css('div.layout-sidebar__side__inner ul li a::attr(href)').getall()[2]
+
+        yield response.follow(ass_page, self.parseSubjectAss, cb_kwargs=dict(sspost=sspost))
+    
+
+
+    def parseSubjectAss(self, response, sspost):
+
+        assessments = {}
+
+        i = 0
+        for ass in response.css('div.assessment-table table tr'):
+            ass_list = []
+            if i > 0:
+                ass_list.extend(ass.css('td p::text').getall())
+                ass_list.extend(ass.css('td::text').getall())
+                assessments["assessment "+str(i)] = ass_list
+            i += 1
+        
+        sspost['assessments'] = assessments
+
+        dnt_page = response.css('div.layout-sidebar__side__inner ul li a::attr(href)').getall()[3]
+
+        yield response.follow(dnt_page, self.parseSubjectDNT, cb_kwargs=dict(sspost=sspost))
+
+
+
+    def parseSubjectDNT(self, response, sspost):
+
+        availability = sspost['availability']
+
+        date_and_times = {}
+
+        i = 0
+        for dnt in response.css('div.course__body__inner ul.accordion li'):
+            curr_info = {} 
+            k = dnt.css('table tr th::text').getall()
+            v = dnt.css('table tr td::text').getall()
+            for j in range(len(k)):
+                curr_info[k[j]] = v[j]
+            date_and_times[availability[i]] = curr_info
+            i += 1
+
+        sspost['date_n_time'] = date_and_times
 
         yield sspost
-
-        
-
-        '''
-        # Get the 'eligibility and requirements page'
-        next_page = response.css('div.layout-sidebar__side__inner ul li a::attr(href)').getall()[1]
-        
-        if next_page is not None:
-            # Pass the requirement page to parseReq function
-            next_page = response.urljoin(next_page)
-            yield scrapy.Request(next_page, callback=self.parseReq)
-        '''

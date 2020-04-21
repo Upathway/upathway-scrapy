@@ -14,5 +14,10 @@ class UniscrapyItem(scrapy.Item):
     subject = scrapy.Field()
     code = scrapy.Field()
     overview = scrapy.Field()
+    ILO = scrapy.Field()
+    generic_skills = scrapy.Field()
     availability = scrapy.Field()
+    prerequisites = scrapy.Field()
+    assessments = scrapy.Field()
+    date_n_time = scrapy.Field()
 
