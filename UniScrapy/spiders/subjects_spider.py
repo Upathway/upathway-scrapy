@@ -4,9 +4,14 @@ from UniScrapy.items import UniscrapyItem
 
 class SubjectsSpider(scrapy.Spider):
     name = "subjects"
+    # start_urls = [
+    #     # All undergraduate CIS subjects
+    #     'https://handbook.unimelb.edu.au/search?area_of_study%5B%5D=all&campus_and_attendance_mode%5B%5D=all&org_unit%5B%5D=4180&sort=_score%7Cdesc&study_periods%5B%5D=all&subject_level_type%5B%5D=undergraduate&types%5B%5D=subject&year=2020'
+    # ]
+
     start_urls = [
-        # All undergraduate CIS subjects
-        'https://handbook.unimelb.edu.au/search?area_of_study%5B%5D=all&campus_and_attendance_mode%5B%5D=all&org_unit%5B%5D=4180&sort=_score%7Cdesc&study_periods%5B%5D=all&subject_level_type%5B%5D=undergraduate&types%5B%5D=subject&year=2020'
+        # All CIS and Maths subjects
+        'https://handbook.unimelb.edu.au/search?types%5B%5D=subject&year=2020&subject_level_type%5B%5D=all&study_periods%5B%5D=all&area_of_study%5B%5D=all&org_unit%5B%5D=4180&org_unit%5B%5D=6200&campus_and_attendance_mode%5B%5D=all&page=1&sort=_score%7Cdesc'
     ]
 
     def parse(self, response):
@@ -31,7 +36,7 @@ class SubjectsSpider(scrapy.Spider):
         # Extract the subject information
         name = response.css('title::text').get().split(' ')
         
-        sspost['subject'] = ' '.join(name[0:-7])
+        sspost['name'] = ' '.join(name[0:-7])
         sspost['code'] = name[-7][1:-1]
         sspost['overview'] = response.css('div.course__overview-wrapper p::text').getall()[0]
 
@@ -57,7 +62,19 @@ class SubjectsSpider(scrapy.Spider):
 
     def parseSubjectReq(self, response, sspost):
 
-        sspost['prerequisites'] = response.css('div#prerequisites table tr td a::text').getall()
+        related = []
+
+        for subject in response.css('div#prerequisites table tr'):
+            related_dic = {}
+            relate = subject.css('td::text').getall()
+            if relate:
+                code = relate[0]
+                name = subject.css('td a::text').getall()[0]
+                related_dic['name'] = name
+                related_dic['code'] = code
+                related.append(related_dic)
+
+        sspost['relate_subjects'] = related
 
         ass_page = response.css('div.layout-sidebar__side__inner ul li a::attr(href)').getall()[2]
 

@@ -10,14 +10,13 @@ import scrapy
 
 class UniscrapyItem(scrapy.Item):
     # define the fields for your item here like:
-    # name = scrapy.Field()
-    subject = scrapy.Field()
+    name = scrapy.Field()
     code = scrapy.Field()
     overview = scrapy.Field()
     ILO = scrapy.Field()
     generic_skills = scrapy.Field()
     availability = scrapy.Field()
-    prerequisites = scrapy.Field()
+    relate_subjects = scrapy.Field()
     assessments = scrapy.Field()
     date_n_time = scrapy.Field()
 
