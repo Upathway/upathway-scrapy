@@ -8,6 +8,7 @@
 #     https://docs.scrapy.org/en/latest/topics/settings.html
 #     https://docs.scrapy.org/en/latest/topics/downloader-middleware.html
 #     https://docs.scrapy.org/en/latest/topics/spider-middleware.html
+import os
 
 BOT_NAME = 'UniScrapy'
 
@@ -90,5 +91,5 @@ ITEM_PIPELINES = {
 #HTTPCACHE_IGNORE_HTTP_CODES = []
 #HTTPCACHE_STORAGE = 'scrapy.extensions.httpcache.FilesystemCacheStorage'
 
-MONGO_URI = 'mongodb+srv://INFO30006GroupMember:ytxtUnxbuwBVhT02@info30005-kapqo.mongodb.net/test?authSource=admin&replicaSet=INFO30005-shard-0&readPreference=primary&appname=MongoDB%20Compass&ssl=true'
-MONGO_DATABASE = 'test'
+MONGO_URI = os.environ.get('MONGO_URI')
+MONGO_DATABASE = os.environ.get('MONGO_DATABASE')

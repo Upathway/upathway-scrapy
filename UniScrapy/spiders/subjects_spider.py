@@ -1,5 +1,5 @@
 import scrapy
-from UniScrapy.items import UniscrapyItem
+from UniScrapy.items import Subject
 
 
 class SubjectsSpider(scrapy.Spider):
@@ -10,8 +10,9 @@ class SubjectsSpider(scrapy.Spider):
     # ]
 
     start_urls = [
-        # All CIS and Maths subjects
-        'https://handbook.unimelb.edu.au/search?types%5B%5D=subject&year=2020&subject_level_type%5B%5D=all&study_periods%5B%5D=all&area_of_study%5B%5D=all&org_unit%5B%5D=4180&org_unit%5B%5D=6200&campus_and_attendance_mode%5B%5D=all&page=1&sort=_score%7Cdesc'
+        #  All 2021 CIS and Maths subjects
+        "https://handbook.unimelb.edu.au/search?types%5B%5D=subject&year=2021&subject_level_type%5B%5D=all&study_periods%5B%5D=all&area_of_study%5B%5D=all&org_unit%5B%5D=4180&org_unit%5B%5D=6200&campus_and_attendance_mode%5B%5D=all&page=1&sort=_score%7Cdesc"
+        # 'https://handbook.unimelb.edu.au/search?types%5B%5D=subject&year=2020&subject_level_type%5B%5D=all&study_periods%5B%5D=all&area_of_study%5B%5D=all&org_unit%5B%5D=4180&org_unit%5B%5D=6200&campus_and_attendance_mode%5B%5D=all&page=1&sort=_score%7Cdesc'
     ]
 
     def parse(self, response):
@@ -32,7 +33,7 @@ class SubjectsSpider(scrapy.Spider):
 
     def parseSubjectHome(self, response):
         
-        sspost = UniscrapyItem()
+        sspost = Subject()
         # Extract the subject information
         name = response.css('title::text').get().split(' ')
         
@@ -57,8 +58,6 @@ class SubjectsSpider(scrapy.Spider):
         req_page = response.css('div.layout-sidebar__side__inner ul li a::attr(href)').getall()[1]
 
         yield response.follow(req_page, self.parseSubjectReq, cb_kwargs=dict(sspost=sspost))
-
-
 
     def parseSubjectReq(self, response, sspost):
 
