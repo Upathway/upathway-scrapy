@@ -8,14 +8,14 @@
 import scrapy
 
 class Subject(scrapy.Item):
-    # define the fields for your item here like:
-    name = scrapy.Field()
     code = scrapy.Field()
+    name = scrapy.Field()
     overview = scrapy.Field()
-    ILO = scrapy.Field()
+    intended_learning_outcome = scrapy.Field()
     generic_skills = scrapy.Field()
     availability = scrapy.Field()
-    relate_subjects = scrapy.Field()
     assessments = scrapy.Field()
-    date_n_time = scrapy.Field()
+    date_and_time = scrapy.Field()
+    prerequisites = scrapy.Field()
+    corequisites = scrapy.Field()
 
