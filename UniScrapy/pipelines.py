@@ -1,5 +1,10 @@
+import logging
+
 import pymongo
+from neomodel import config
 from scrapy.exceptions import DropItem
+
+from UniScrapy.neo4j.model.Subject import Subject
 
 
 class UniscrapyPipeline(object):
@@ -18,14 +23,37 @@ class UniscrapyPipeline(object):
         )
 
     def open_spider(self, spider):
-        self.client = pymongo.MongoClient(self.mongo_uri)
-        self.db = self.client[self.mongo_db]
+        config.DATABASE_URL = 'bolt://neo4j:test@192.168.1.17:7687'  # default
 
     def close_spider(self, spider):
-        self.client.close()
+        pass
 
     def process_item(self, item, spider):
-        self.db[self.collection_name].insert_one(dict(item))
+        item = dict(item)
+        # pop prerequisites from dict as we model prerequisites as relationship in neo4j
+        prerequisites = item.pop('prerequisites', None)
+
+        subject_node = Subject.nodes.get_or_none(code=item["code"])
+        # Update existing subject (usually a placeholder)
+        if (subject_node):
+            subject_node.name = item["name"]
+            subject_node.overview = item["overview"]
+            subject_node.intended_learning_outcome = item["intended_learning_outcome"]
+            subject_node.generic_skills = item["generic_skills"]
+            subject_node.availability = item["availability"]
+            subject_node.assessments = item["assessments"]
+            subject_node.date_and_time = item["date_and_time"]
+        else:
+            subject_node = Subject(**item).save()
+
+        for pre in prerequisites:
+            # find matching node by subject code and name
+            pre_node = Subject.nodes.get_or_none(code=pre["code"])
+            # if None is present, create a new node as a placeholder
+            if not pre_node:
+                pre_node = Subject(**pre).save()
+            # connect nodes as prerequisites
+            subject_node.prerequisites.connect(pre_node)
         return item
 
 

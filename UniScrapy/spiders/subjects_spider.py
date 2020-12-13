@@ -1,13 +1,10 @@
 import scrapy
+import logging
 from UniScrapy.items import Subject
 
 
 class SubjectsSpider(scrapy.Spider):
     name = "subjects"
-    # start_urls = [
-    #     # All undergraduate CIS subjects
-    #     'https://handbook.unimelb.edu.au/search?area_of_study%5B%5D=all&campus_and_attendance_mode%5B%5D=all&org_unit%5B%5D=4180&sort=_score%7Cdesc&study_periods%5B%5D=all&subject_level_type%5B%5D=undergraduate&types%5B%5D=subject&year=2020'
-    # ]
 
     start_urls = [
         #  All 2021 CIS and Maths subjects
@@ -44,7 +41,7 @@ class SubjectsSpider(scrapy.Spider):
         ILO = response.css('div#learning-outcomes ul li::text').getall()
         if not ILO:
             ILO = response.css('div#learning-outcomes ol li::text').getall()
-        sspost['ILO'] = ILO
+        sspost['intended_learning_outcome'] = ILO
 
         
         GS = response.css('div#generic-skills ul li::text').getall()
@@ -61,7 +58,7 @@ class SubjectsSpider(scrapy.Spider):
 
     def parseSubjectReq(self, response, sspost):
 
-        related = []
+        prerequisites = []
 
         for subject in response.css('div#prerequisites table tr'):
             related_dic = {}
@@ -71,9 +68,9 @@ class SubjectsSpider(scrapy.Spider):
                 name = subject.css('td a::text').getall()[0]
                 related_dic['name'] = name
                 related_dic['code'] = code
-                related.append(related_dic)
+                prerequisites.append(related_dic)
 
-        sspost['relate_subjects'] = related
+        sspost['prerequisites'] = prerequisites
 
         ass_page = response.css('div.layout-sidebar__side__inner ul li a::attr(href)').getall()[2]
 
@@ -118,6 +115,6 @@ class SubjectsSpider(scrapy.Spider):
             date_and_times[availability[i]] = curr_info
             i += 1
 
-        sspost['date_n_time'] = date_and_times
+        sspost['date_and_time'] = date_and_times
 
         yield sspost

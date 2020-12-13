@@ -23,7 +23,7 @@ USER_AGENT = 'Yunfei Jing (https://github.com/yunfeijing) for INFO30005 Project'
 ROBOTSTXT_OBEY = False
 
 # Configure maximum concurrent requests performed by Scrapy (default: 16)
-#CONCURRENT_REQUESTS = 32
+CONCURRENT_REQUESTS = 32
 
 # Configure a delay for requests for the same website (default: 0)
 # See https://docs.scrapy.org/en/latest/topics/settings.html#download-delay
@@ -93,3 +93,5 @@ ITEM_PIPELINES = {
 
 MONGO_URI = os.environ.get('MONGO_URI')
 MONGO_DATABASE = os.environ.get('MONGO_DATABASE')
+
+LOG_LEVEL = "INFO"
