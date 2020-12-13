@@ -1,5 +1,8 @@
+from datetime import datetime
+
+import pytz
 from neomodel import (config, StructuredNode, StringProperty, IntegerProperty,
-                      UniqueIdProperty, RelationshipTo, ArrayProperty, Relationship, StructuredRel)
+                      UniqueIdProperty, RelationshipTo, ArrayProperty, Relationship, StructuredRel, DateTimeProperty)
 
 from neomodel import config
 
@@ -15,6 +18,7 @@ class Subject(StructuredNode):
     availability = ArrayProperty()
     assessments = ArrayProperty()
     date_and_time = ArrayProperty()
+    last_update = DateTimeProperty(default=lambda: datetime.now(pytz.utc))
     prerequisites = Relationship('Subject', 'PREREQUISITES', model=SubjectRel)
     corequisites = Relationship('Subject', 'COREQUISITES', model=SubjectRel)
 

@@ -11,19 +11,17 @@ class UniscrapyPipeline(object):
 
     collection_name = 'subjects'
 
-    def __init__(self, mongo_uri, mongo_db):
-        self.mongo_uri = mongo_uri
-        self.mongo_db = mongo_db
+    def __init__(self, neo4j_connection_string):
+        self.neo4j_connection_string = neo4j_connection_string
 
     @classmethod
     def from_crawler(cls, crawler):
         return cls(
-            mongo_uri=crawler.settings.get('MONGO_URI'),
-            mongo_db=crawler.settings.get('MONGO_DATABASE', 'items')
+            neo4j_connection_string=crawler.settings.get('NEO4J_CONNECTION_STRING')
         )
 
     def open_spider(self, spider):
-        config.DATABASE_URL = 'bolt://neo4j:test@192.168.1.17:7687'  # default
+        config.DATABASE_URL = self.neo4j_connection_string  # default
 
     def close_spider(self, spider):
         pass
@@ -46,6 +44,7 @@ class UniscrapyPipeline(object):
         else:
             subject_node = Subject(**item).save()
 
+        # TODO: use batch operation instead of for loop
         for pre in prerequisites:
             # find matching node by subject code and name
             pre_node = Subject.nodes.get_or_none(code=pre["code"])
