@@ -1,6 +1,8 @@
 import logging
+from datetime import datetime
 
 import pymongo
+import pytz
 from neomodel import config
 from scrapy.exceptions import DropItem
 
@@ -42,7 +44,9 @@ class UniscrapyPipeline(object):
             subject_node.assessments = item["assessments"]
             subject_node.date_and_time = item["date_and_time"]
         else:
-            subject_node = Subject(**item).save()
+            subject_node = Subject(**item)
+        subject_node.last_update = datetime.now(pytz.utc)
+        subject_node.save()
 
         # TODO: use batch operation instead of for loop
         for pre in prerequisites:
