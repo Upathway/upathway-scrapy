@@ -26,7 +26,6 @@ class SubjectsSpider(scrapy.Spider):
         if next_page:
             yield response.follow(next_page, callback=self.parse)
 
-        
 
     def parseSubjectHome(self, response):
         

@@ -13,40 +13,43 @@ class UniscrapyPipeline(object):
 
     collection_name = 'subjects'
 
-    def __init__(self, neo4j_connection_string):
+    def __init__(self,  mongo_uri, mongo_db, neo4j_connection_string):
         self.neo4j_connection_string = neo4j_connection_string
+        self.mongo_uri = mongo_uri
+        self.mongo_db = mongo_db
 
     @classmethod
     def from_crawler(cls, crawler):
         return cls(
-            neo4j_connection_string=crawler.settings.get('NEO4J_CONNECTION_STRING')
+            neo4j_connection_string=crawler.settings.get('NEO4J_CONNECTION_STRING'),
+            mongo_uri = crawler.settings.get('MONGO_URI'),
+            mongo_db = crawler.settings.get('MONGO_DATABASE', 'items')
         )
 
     def open_spider(self, spider):
+        self.client = pymongo.MongoClient(self.mongo_uri)
+        self.db = self.client[self.mongo_db]
         config.DATABASE_URL = self.neo4j_connection_string  # default
 
     def close_spider(self, spider):
-        pass
+        self.client.close()
 
     def process_item(self, item, spider):
         item = dict(item)
         # pop prerequisites from dict as we model prerequisites as relationship in neo4j
         prerequisites = item.pop('prerequisites', None)
+        item["placeholder"] = False
 
         subject_node = Subject.nodes.get_or_none(code=item["code"])
-        # Update existing subject (usually a placeholder)
-        if (subject_node):
-            subject_node.name = item["name"]
-            subject_node.overview = item["overview"]
-            subject_node.intended_learning_outcome = item["intended_learning_outcome"]
-            subject_node.generic_skills = item["generic_skills"]
-            subject_node.availability = item["availability"]
-            subject_node.assessments = item["assessments"]
-            subject_node.date_and_time = item["date_and_time"]
+        # create a new node
+        if not subject_node:
+            subject_node = Subject(**item).save()
+
+        subject_doc = self.db[self.collection_name].find_one({"code": item["code"]})
+        if not subject_doc:
+            self.db[self.collection_name].insert_one(item)
         else:
-            subject_node = Subject(**item)
-        subject_node.last_update = datetime.now(pytz.utc)
-        subject_node.save()
+            self.db[self.collection_name].replace_one(subject_doc, item)
 
         # TODO: use batch operation instead of for loop
         for pre in prerequisites:
@@ -55,8 +58,11 @@ class UniscrapyPipeline(object):
             # if None is present, create a new node as a placeholder
             if not pre_node:
                 pre_node = Subject(**pre).save()
+                pre["placeholder"] = True
+                self.db[self.collection_name].insert_one(dict(pre))
             # connect nodes as prerequisites
             subject_node.prerequisites.connect(pre_node)
+
         return item
 
 
