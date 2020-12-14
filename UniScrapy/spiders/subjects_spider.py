@@ -62,9 +62,10 @@ class SubjectsSpider(scrapy.Spider):
         for subject in response.css('div#prerequisites table tr'):
             related_dic = {}
             relate = subject.css('td::text').getall()
-            if relate:
+            names = subject.css('td a::text').getall()
+            if relate and names:
                 code = relate[0]
-                name = subject.css('td a::text').getall()[0]
+                name = names[0]
                 related_dic['name'] = name
                 related_dic['code'] = code
                 prerequisites.append(related_dic)
@@ -111,6 +112,7 @@ class SubjectsSpider(scrapy.Spider):
             v = dnt.css('table tr td::text').getall()
             for j in range(len(k)):
                 curr_info[k[j]] = v[j]
+            # TODO: Replace Index by label name to avoid IndexError
             date_and_times[availability[i]] = curr_info
             i += 1
 
