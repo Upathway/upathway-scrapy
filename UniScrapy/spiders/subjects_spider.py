@@ -1,5 +1,8 @@
 import scrapy
 import logging
+
+from scrapy.http import Response
+
 from UniScrapy.items import Subject
 
 
@@ -27,12 +30,12 @@ class SubjectsSpider(scrapy.Spider):
             yield response.follow(next_page, callback=self.parse)
 
 
-    def parseSubjectHome(self, response):
+    def parseSubjectHome(self, response: Response):
         
         sspost = Subject()
         # Extract the subject information
         name = response.css('title::text').get().split(' ')
-        
+        sspost['handbook_url'] = response.url
         sspost['name'] = ' '.join(name[0:-7])
         sspost['code'] = name[-7][1:-1]
         sspost['overview'] = response.css('div.course__overview-wrapper p::text').getall()[0]
