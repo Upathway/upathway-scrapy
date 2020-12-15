@@ -6,10 +6,10 @@ import pytz
 from neomodel import config
 from scrapy.exceptions import DropItem
 
-from UniScrapy.neo4j.model.Subject import Subject
+from UniScrapy.neo4j.model.subject import Subject
 
 
-class UniscrapyPipeline(object):
+class SubjectPipeline(object):
 
     collection_name = 'subjects'
 
@@ -65,15 +65,14 @@ class UniscrapyPipeline(object):
 
         return item
 
-
 class DuplicatesPipeline(object):
 
     def __init__(self):
         self.ids_seen = set()
 
     def process_item(self, item, spider):
-        if item['name'] in self.ids_seen:
+        if item['code'] in self.ids_seen:
             raise DropItem("Duplicate item found: %s" % item)
         else:
-            self.ids_seen.add(item['name'])
+            self.ids_seen.add(item['code'])
             return item

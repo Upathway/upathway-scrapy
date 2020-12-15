@@ -65,10 +65,6 @@ CONCURRENT_REQUESTS = 32
 
 # Configure item pipelines
 # See https://docs.scrapy.org/en/latest/topics/item-pipeline.html
-ITEM_PIPELINES = {
-    'UniScrapy.pipelines.DuplicatesPipeline': 100,
-    'UniScrapy.pipelines.UniscrapyPipeline': 300,
-}
 
 # Enable and configure the AutoThrottle extension (disabled by default)
 # See https://docs.scrapy.org/en/latest/topics/autothrottle.html
@@ -91,8 +87,5 @@ ITEM_PIPELINES = {
 #HTTPCACHE_IGNORE_HTTP_CODES = []
 #HTTPCACHE_STORAGE = 'scrapy.extensions.httpcache.FilesystemCacheStorage'
 
-MONGO_URI = os.environ.get('MONGO_URI')
-MONGO_DATABASE = os.environ.get('MONGO_DATABASE')
-NEO4J_CONNECTION_STRING = os.environ.get('NEO4J_CONNECTION_STRING')
 
 LOG_LEVEL = "INFO"

@@ -1,17 +1,30 @@
+import os
+
 import scrapy
 import logging
 
 from scrapy.http import Response
 
-from UniScrapy.items import Subject
+from UniScrapy.items import subject_item
 
 
 class SubjectsSpider(scrapy.Spider):
     name = "subjects"
+    custom_settings = {
+        "MONGO_URI": os.environ.get('MONGO_URI'),
+        "MONGO_DATABASE": os.environ.get('MONGO_DATABASE'),
+        "NEO4J_CONNECTION_STRING": os.environ.get('NEO4J_CONNECTION_STRING'),
+        "ITEM_PIPELINES": {
+            'UniScrapy.pipelines.subject_pipeline.DuplicatesPipeline': 100,
+            'UniScrapy.pipelines.subject_pipeline.AreaOfStudyPipeline': 300,
+        }
+    }
 
     start_urls = [
+        # All subjects
+        "https://handbook.unimelb.edu.au/search?types%5B%5D=subject&year=2021&level_type%5B%5D=all&campus_and_attendance_mode%5B%5D=all&org_unit%5B%5D=all&page=1&sort=_score%7Cdesc"
         #  All 2021 CIS and Maths subjects
-        "https://handbook.unimelb.edu.au/search?types%5B%5D=subject&year=2021&subject_level_type%5B%5D=all&study_periods%5B%5D=all&area_of_study%5B%5D=all&org_unit%5B%5D=4180&org_unit%5B%5D=6200&campus_and_attendance_mode%5B%5D=all&page=1&sort=_score%7Cdesc"
+        # "https://handbook.unimelb.edu.au/search?types%5B%5D=subject&year=2021&subject_level_type%5B%5D=all&study_periods%5B%5D=all&area_of_study%5B%5D=all&org_unit%5B%5D=4180&org_unit%5B%5D=6200&campus_and_attendance_mode%5B%5D=all&page=1&sort=_score%7Cdesc"
         # 'https://handbook.unimelb.edu.au/search?types%5B%5D=subject&year=2020&subject_level_type%5B%5D=all&study_periods%5B%5D=all&area_of_study%5B%5D=all&org_unit%5B%5D=4180&org_unit%5B%5D=6200&campus_and_attendance_mode%5B%5D=all&page=1&sort=_score%7Cdesc'
     ]
 
@@ -32,7 +45,7 @@ class SubjectsSpider(scrapy.Spider):
 
     def parseSubjectHome(self, response: Response):
         
-        sspost = Subject()
+        sspost = subject_item()
         # Extract the subject information
         name = response.css('title::text').get().split(' ')
         sspost['handbook_url'] = response.url

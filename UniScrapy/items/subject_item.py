@@ -10,6 +10,7 @@ import scrapy
 class Subject(scrapy.Item):
     code = scrapy.Field()
     name = scrapy.Field()
+    handbook_url = scrapy.Field()
     overview = scrapy.Field()
     intended_learning_outcome = scrapy.Field()
     generic_skills = scrapy.Field()
