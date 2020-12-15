@@ -16,7 +16,7 @@ class SubjectsSpider(scrapy.Spider):
         "NEO4J_CONNECTION_STRING": os.environ.get('NEO4J_CONNECTION_STRING'),
         "ITEM_PIPELINES": {
             'UniScrapy.pipelines.subject_pipeline.DuplicatesPipeline': 100,
-            'UniScrapy.pipelines.subject_pipeline.AreaOfStudyPipeline': 300,
+            'UniScrapy.pipelines.subject_pipeline.SubjectPipeline': 300,
         }
     }
 
