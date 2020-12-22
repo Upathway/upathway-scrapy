@@ -2,7 +2,8 @@ from datetime import datetime
 
 import pytz
 from neomodel import (config, StructuredNode, StringProperty, IntegerProperty,
-                      UniqueIdProperty, RelationshipTo, ArrayProperty, Relationship, StructuredRel, DateTimeProperty)
+                      UniqueIdProperty, RelationshipTo, ArrayProperty, Relationship, StructuredRel, DateTimeProperty,
+                      FloatProperty)
 
 from neomodel import config
 
@@ -14,6 +15,8 @@ class Subject(StructuredNode):
     name = StringProperty(unique_index=True, required=True)
     level = IntegerProperty(required=True)
     area_of_study = StringProperty(required=True)
+    credit = FloatProperty()
+    type = StringProperty()
     prerequisites = Relationship('Subject', 'PREREQUISITES', model=SubjectRel)
     corequisites = Relationship('Subject', 'COREQUISITES', model=SubjectRel)
 

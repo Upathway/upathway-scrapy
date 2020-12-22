@@ -1,4 +1,5 @@
 import os
+import re
 
 import scrapy
 import logging
@@ -47,12 +48,26 @@ class SubjectsSpider(scrapy.Spider):
         
         sspost = Subject()
         # Extract the subject information
+        # header = response.css('span.header--course-and-subject__main ::text').getall()[0]
+        # result = re.search(r"([A-Za-z0-9 ]+) \(([A-Za-z0-9_]+)\)", header)
+        # sspost['name'] = result.group(1).strip()
+        # sspost['code'] = result.group(2).strip()
+
         name = response.css('title::text').get().split(' ')
-        sspost['handbook_url'] = response.url
         sspost['name'] = ' '.join(name[0:-7])
         sspost['code'] = name[-7][1:-1]
-        sspost['overview'] = response.css('div.course__overview-wrapper p::text').getall()[0]
+        sspost['handbook_url'] = response.url
 
+        details = response.css('p.header--course-and-subject__details span::text').getall()
+        credit_match = re.match(r"Points: (\d*\.?\d*)", details[1])
+        if credit_match:
+            sspost["credit"] = credit_match.group(1)
+        else:
+            sspost["credit"] = None
+
+        sspost["type"] = details[0]
+
+        sspost['overview'] = response.css('div.course__overview-wrapper p::text').getall()[0]
         ILO = response.css('div#learning-outcomes ul li::text').getall()
         if not ILO:
             ILO = response.css('div#learning-outcomes ol li::text').getall()

@@ -20,5 +20,7 @@ class Subject(scrapy.Item):
     prerequisites = scrapy.Field()
     corequisites = scrapy.Field()
     level = scrapy.Field()
+    credit = scrapy.Field()
+    type = scrapy.Field()
     area_of_study = scrapy.Field()
 
