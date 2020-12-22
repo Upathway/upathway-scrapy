@@ -43,6 +43,7 @@ class SubjectPipeline(object):
         subject_node = Subject.nodes.get_or_none(code=item["code"])
         # create a new node
         if not subject_node:
+            item = self.attach_tags(item, spider)
             subject_node = Subject(**item).save()
 
         subject_doc = self.db[self.collection_name].find_one({"code": item["code"]})
@@ -57,12 +58,19 @@ class SubjectPipeline(object):
             pre_node = Subject.nodes.get_or_none(code=pre["code"])
             # if None is present, create a new node as a placeholder
             if not pre_node:
+                pre = self.attach_tags(pre, spider)
                 pre_node = Subject(**pre).save()
                 pre["placeholder"] = True
                 self.db[self.collection_name].insert_one(dict(pre))
             # connect nodes as prerequisites
             subject_node.prerequisites.connect(pre_node)
 
+        return item
+
+    def attach_tags(self, item, spider):
+        item = dict(item)
+        item["level"] = int(item["code"][4])
+        item["area_of_study"] = item["code"][0:4]
         return item
 
 class DuplicatesPipeline(object):

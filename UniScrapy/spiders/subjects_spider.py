@@ -5,7 +5,7 @@ import logging
 
 from scrapy.http import Response
 
-from UniScrapy.items import subject_item
+from UniScrapy.items.subject_item import Subject
 
 
 class SubjectsSpider(scrapy.Spider):
@@ -45,7 +45,7 @@ class SubjectsSpider(scrapy.Spider):
 
     def parseSubjectHome(self, response: Response):
         
-        sspost = subject_item()
+        sspost = Subject()
         # Extract the subject information
         name = response.css('title::text').get().split(' ')
         sspost['handbook_url'] = response.url
@@ -133,5 +133,4 @@ class SubjectsSpider(scrapy.Spider):
             i += 1
 
         sspost['date_and_time'] = date_and_times
-
         yield sspost

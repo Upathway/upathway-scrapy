@@ -12,6 +12,8 @@ class Subject(StructuredNode):
     uid = UniqueIdProperty()
     code = StringProperty(unique_index=True, required=True)
     name = StringProperty(unique_index=True, required=True)
+    level = IntegerProperty(required=True)
+    area_of_study = StringProperty(required=True)
     prerequisites = Relationship('Subject', 'PREREQUISITES', model=SubjectRel)
     corequisites = Relationship('Subject', 'COREQUISITES', model=SubjectRel)
 
