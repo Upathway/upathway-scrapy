@@ -131,21 +131,14 @@ class SubjectsSpider(scrapy.Spider):
 
 
     def parseSubjectDNT(self, response, sspost):
+        sspost['date_and_time'] = []
+        for term in response.css('ul.accordion li'):
+            date = {}
+            date["term_name"] = term.css("div.accordion__title::text").get()
+            date["contact_details"] = term.css("div.course__body__inner__contact_details p a ::text").getall()
+            # Add each lines in the table into a dictionary
+            for line in term.css('div table tbody tr'):
+                date[line.css("th::text").get()] = line.css("td::text").get()
+            sspost['date_and_time'].append(date)
 
-        availability = sspost['availability']
-
-        date_and_times = {}
-
-        i = 0
-        for dnt in response.css('div.course__body__inner ul.accordion li'):
-            curr_info = {} 
-            k = dnt.css('table tr th::text').getall()
-            v = dnt.css('table tr td::text').getall()
-            for j in range(len(k)):
-                curr_info[k[j]] = v[j]
-            # TODO: Replace Index by label name to avoid IndexError
-            date_and_times[availability[i]] = curr_info
-            i += 1
-
-        sspost['date_and_time'] = date_and_times
         yield sspost
