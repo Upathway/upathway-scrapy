@@ -26,7 +26,6 @@ class SubjectsSpider(scrapy.Spider):
         "https://handbook.unimelb.edu.au/search?types%5B%5D=subject&year=2021&level_type%5B%5D=all&campus_and_attendance_mode%5B%5D=all&org_unit%5B%5D=all&page=1&sort=_score%7Cdesc"
         #  All 2021 CIS and Maths subjects
         # "https://handbook.unimelb.edu.au/search?types%5B%5D=subject&year=2021&subject_level_type%5B%5D=all&study_periods%5B%5D=all&area_of_study%5B%5D=all&org_unit%5B%5D=4180&org_unit%5B%5D=6200&campus_and_attendance_mode%5B%5D=all&page=1&sort=_score%7Cdesc"
-        # 'https://handbook.unimelb.edu.au/search?types%5B%5D=subject&year=2020&subject_level_type%5B%5D=all&study_periods%5B%5D=all&area_of_study%5B%5D=all&org_unit%5B%5D=4180&org_unit%5B%5D=6200&campus_and_attendance_mode%5B%5D=all&page=1&sort=_score%7Cdesc'
     ]
 
     def parse(self, response):
@@ -67,7 +66,7 @@ class SubjectsSpider(scrapy.Spider):
 
         sspost["type"] = details[0]
 
-        sspost['overview'] = response.css('div.course__overview-wrapper p::text').getall()[0]
+        sspost['overview'] = response.css('div.course__overview-wrapper p::text').get()
         ILO = response.css('div#learning-outcomes ul li::text').getall()
         if not ILO:
             ILO = response.css('div#learning-outcomes ol li::text').getall()
@@ -84,24 +83,27 @@ class SubjectsSpider(scrapy.Spider):
         # Get the 'eligibility and requirements page'
         req_page = response.css('div.layout-sidebar__side__inner ul li a::attr(href)').getall()[1]
 
-        yield response.follow(req_page, self.parseSubjectReq, cb_kwargs=dict(sspost=sspost))
+        yield response.follow(req_page, self.parsePrerequisites, cb_kwargs=dict(sspost=sspost))
 
-    def parseSubjectReq(self, response, sspost):
+    def parsePrerequisites(self, response, sspost):
 
         prerequisites = []
 
         for subject in response.css('div#prerequisites table tr'):
             related_dic = {}
-            relate = subject.css('td::text').getall()
-            names = subject.css('td a::text').getall()
+            relate = subject.css('td::text').get()
+            names = subject.css('td a::text').get()
             if relate and names:
-                code = relate[0]
-                name = names[0]
+                code = relate
+                name = names
                 related_dic['name'] = name
                 related_dic['code'] = code
                 prerequisites.append(related_dic)
 
         sspost['prerequisites'] = prerequisites
+
+        for link in response.css('div#prerequisites table tr a::attr(href)').getall():
+            yield response.follow(link, callback=self.parseSubjectHome)
 
         ass_page = response.css('div.layout-sidebar__side__inner ul li a::attr(href)').getall()[2]
 
