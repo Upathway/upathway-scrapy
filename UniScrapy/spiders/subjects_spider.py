@@ -72,11 +72,21 @@ class SubjectsSpider(scrapy.Spider):
             ILO = response.css('div#learning-outcomes ol li::text').getall()
         sspost['intended_learning_outcome'] = ILO
 
-        
-        GS = response.css('div#generic-skills ul li::text').getall()
-        if not GS:
-            GS = response.css('div#generic-skills ol li::text').getall()
-        sspost["generic_skills"] = GS
+        skills = []
+        for skill in response.css('div#generic-skills ul.ticked-list'):
+            strong = skill.css("li strong::text").get()
+            text = skill.css("li::text").get()
+            if strong:
+                text = strong + text
+            if text:
+                skills.append(text.strip())
+
+        for skill in response.css('div#generic-skills ol'):
+            text = skill.css("li::text").get()
+            if text:
+                skills.append(text.strip())
+
+        sspost["generic_skills"] = skills
 
         sspost['availability'] = response.css('div.course__overview-box table tr td div::text').getall()
 
