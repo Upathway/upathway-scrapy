@@ -6,6 +6,7 @@ import pytz
 from neomodel import config
 from scrapy.exceptions import DropItem
 
+from UniScrapy.models.Subject import SubjectModel
 from UniScrapy.neo4j.model.subject import Subject
 
 
@@ -13,44 +14,47 @@ class SubjectPipeline(object):
 
     collection_name = 'subjects'
 
-    def __init__(self,  mongo_uri, mongo_db, neo4j_connection_string):
+    def __init__(self, neo4j_connection_string):
         self.neo4j_connection_string = neo4j_connection_string
-        self.mongo_uri = mongo_uri
-        self.mongo_db = mongo_db
 
     @classmethod
     def from_crawler(cls, crawler):
         return cls(
             neo4j_connection_string=crawler.settings.get('NEO4J_CONNECTION_STRING'),
-            mongo_uri = crawler.settings.get('MONGO_URI'),
-            mongo_db = crawler.settings.get('MONGO_DATABASE', 'items')
         )
 
     def open_spider(self, spider):
-        self.client = pymongo.MongoClient(self.mongo_uri)
-        self.db = self.client[self.mongo_db]
         config.DATABASE_URL = self.neo4j_connection_string  # default
 
     def close_spider(self, spider):
-        self.client.close()
+        return
 
     def process_item(self, item, spider):
         item = dict(item)
         # pop prerequisites from dict as we model prerequisites as relationship in neo4j
         prerequisites = item.pop('prerequisites', None)
-        item["placeholder"] = False
 
         subject_node = Subject.nodes.get_or_none(code=item["code"])
-        # create a new node
+        # attach tags then create a new node
         if not subject_node:
             item = self.attach_tags(item, spider)
             subject_node = Subject(**item).save()
 
-        subject_doc = self.db[self.collection_name].find_one({"code": item["code"]})
-        if not subject_doc:
-            self.db[self.collection_name].insert_one(item)
-        else:
-            self.db[self.collection_name].replace_one(subject_doc, item)
+        subject = SubjectModel(
+            code=item["code"],
+            name=item["name"],
+            handbook_url=item["handbook_url"],
+            overview=item["overview"],
+            type=item["type"],
+            credit=item["credit"],
+            availability=item["availability"],
+            intended_learning_outcome=item["intended_learning_outcome"],
+            generic_skills=item["generic_skills"],
+            assessments=item["assessments"],
+            date_and_time=item["date_and_time"]
+        )
+        subject.save()
+
 
         # TODO: use batch operation instead of for loop
         for pre in prerequisites:
@@ -60,8 +64,6 @@ class SubjectPipeline(object):
             if not pre_node:
                 pre = self.attach_tags(pre, spider)
                 pre_node = Subject(**pre).save()
-                pre["placeholder"] = True
-                self.db[self.collection_name].insert_one(dict(pre))
             # connect nodes as prerequisites
             subject_node.prerequisites.connect(pre_node)
 
