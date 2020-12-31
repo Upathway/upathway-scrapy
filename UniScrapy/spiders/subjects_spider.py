@@ -123,17 +123,35 @@ class SubjectsSpider(scrapy.Spider):
 
     def parseSubjectAss(self, response, sspost):
 
-        assessments = {}
+        from scrapy.shell import inspect_response
+        inspect_response(response, self)
+        assessments = []
 
-        i = 0
-        for ass in response.css('div.assessment-table table tr'):
-            ass_list = []
-            if i > 0:
-                ass_list.extend(ass.css('td p::text').getall())
-                ass_list.extend(ass.css('td::text').getall())
-                assessments["assessment "+str(i)] = ass_list
-            i += 1
-        
+        for ass in response.css('div.assessment-table table tbody tr'):
+            ass_item = {}
+            description = ass.css('td p::text').get()
+            # if have description wrapped in p, then it is a regular assessment
+            columns = ass.css('td::text').getall()
+            if description:
+                ass_item["description"] = description.strip()
+                if len(columns) == 2:
+                    ass_item["timing"] = columns[0].strip()
+                    ass_item["percentage"] = columns[1].strip()
+                else:
+                    ass_item["timing"] = None
+                    ass_item["percentage"] = columns[0].strip()
+            else:
+                ass_item["description"] = columns[0].strip()
+                if len(columns) == 3:
+                    ass_item["timing"] = columns[1].strip()
+                    ass_item["percentage"] = columns[2].strip()
+                else:
+                    ass_item["timing"] = None
+                    ass_item["percentage"] = columns[1].strip()
+
+
+            assessments.append(ass_item)
+
         sspost['assessments'] = assessments
 
         dnt_page = response.css('div.layout-sidebar__side__inner ul li a::attr(href)').getall()[3]

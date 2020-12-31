@@ -1,3 +1,4 @@
+import json
 import logging
 from datetime import datetime
 
@@ -10,6 +11,7 @@ from scrapy.exporters import CsvItemExporter
 from UniScrapy.models.Subject import SubjectModel
 from UniScrapy.neo4j.model.subject import Subject
 
+import requests
 
 class SubjectPipeline(object):
 
@@ -55,22 +57,29 @@ class SubjectPipeline(object):
             item = self.attach_tags(item, spider)
             subject_node = Subject(**item).save()
 
-        # TODO: Use try/except block to handle exceptions
-        # TODO: Export a list of subject that encounters exception
-        subject = SubjectModel(
-            code=item["code"],
-            name=item["name"],
-            handbook_url=item["handbook_url"],
-            overview=item["overview"],
-            type=item["type"],
-            credit=item["credit"],
-            availability=item["availability"],
-            intended_learning_outcome=item["intended_learning_outcome"],
-            generic_skills=item["generic_skills"],
-            assessments=item["assessments"],
-            date_and_time=item["date_and_time"]
-        )
-        subject.save()
+        # # TODO: Use try/except block to handle exceptions
+        # # TODO: Export a list of subject that encounters exception
+        # subject = SubjectModel(
+        #     code=item["code"],
+        #     name=item["name"],
+        #     handbook_url=item["handbook_url"],
+        #     overview=item["overview"],
+        #     type=item["type"],
+        #     credit=item["credit"],
+        #     availability=item["availability"],
+        #     intended_learning_outcome=item["intended_learning_outcome"],
+        #     generic_skills=item["generic_skills"],
+        #     assessments=item["assessments"],
+        #     date_and_time=item["date_and_time"]
+        # )
+        # subject.save()
+
+        headers = {'content-type': 'application/json'}
+        # print(json.dumps(item))
+        response = requests.post(url="https://e7r6quilrh.execute-api.ap-southeast-2.amazonaws.com/dev/api/v1/subjects/", data=json.dumps(item), headers=headers)
+        print(response.json())
+        response.raise_for_status()
+
 
         # TODO: use batch operation instead of for loop
         for pre in prerequisites:

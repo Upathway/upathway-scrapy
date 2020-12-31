@@ -26,9 +26,9 @@ class SubjectModel(Model):
     hidden = BooleanAttribute(default=False)
     deleted = BooleanAttribute(default=False)
 
-    availability = UnicodeSetAttribute()
-    intended_learning_outcome = UnicodeSetAttribute()
-    generic_skills = UnicodeSetAttribute()
+    availability = JSONAttribute()
+    intended_learning_outcome = JSONAttribute()
+    generic_skills = JSONAttribute()
 
     assessments = JSONAttribute()
     date_and_time = JSONAttribute()
