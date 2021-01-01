@@ -39,7 +39,7 @@ class SubjectPipeline(object):
         return item
 
     def convert_credit_to_float(self, item, spider):
-        if item["credit"]:
+        if "credit" in item and item["credit"]:
             item["credit"] = float(item["credit"])
         return item
 
@@ -57,29 +57,9 @@ class SubjectPipeline(object):
             item = self.attach_tags(item, spider)
             subject_node = Subject(**item).save()
 
-        # # TODO: Use try/except block to handle exceptions
-        # # TODO: Export a list of subject that encounters exception
-        # subject = SubjectModel(
-        #     code=item["code"],
-        #     name=item["name"],
-        #     handbook_url=item["handbook_url"],
-        #     overview=item["overview"],
-        #     type=item["type"],
-        #     credit=item["credit"],
-        #     availability=item["availability"],
-        #     intended_learning_outcome=item["intended_learning_outcome"],
-        #     generic_skills=item["generic_skills"],
-        #     assessments=item["assessments"],
-        #     date_and_time=item["date_and_time"]
-        # )
-        # subject.save()
-
-        headers = {'content-type': 'application/json'}
-        # print(json.dumps(item))
-        response = requests.post(url="https://e7r6quilrh.execute-api.ap-southeast-2.amazonaws.com/dev/api/v1/subjects/", data=json.dumps(item), headers=headers)
-        print(response.json())
-        response.raise_for_status()
-
+        self.save_subject(item, spider)
+        # self.save_assessment(item, spider)
+        # self.save_date_and_time(item, spider)
 
         # TODO: use batch operation instead of for loop
         for pre in prerequisites:
@@ -99,6 +79,13 @@ class SubjectPipeline(object):
         item["level"] = int(item["code"][4])
         item["area_of_study"] = item["code"][0:4]
         return item
+
+    def save_subject(self, item, spider):
+        headers = {'content-type': 'application/json'}
+        response = requests.post(url="https://e7r6quilrh.execute-api.ap-southeast-2.amazonaws.com/dev/api/v1/subjects/", data=json.dumps(item), headers=headers)
+        if response.status_code != 200:
+            logging.error(response.json()["message"])
+
 
 class DuplicatesPipeline(object):
 

@@ -7,6 +7,7 @@ import logging
 from scrapy.http import Response
 
 from UniScrapy.items.subject_item import Subject
+import re
 
 
 class SubjectsSpider(scrapy.Spider):
@@ -61,12 +62,12 @@ class SubjectsSpider(scrapy.Spider):
         credit_match = re.match(r"Points: (\d*\.?\d*)", details[1])
         if credit_match:
             sspost["credit"] = credit_match.group(1)
-        else:
-            sspost["credit"] = None
 
         sspost["type"] = details[0]
 
-        sspost['overview'] = response.css('div.course__overview-wrapper p::text').get()
+        overview = response.css('div.course__overview-wrapper p::text').get()
+        if overview:
+            sspost['overview'] = overview
         ILO = response.css('div#learning-outcomes ul li::text').getall()
         if not ILO:
             ILO = response.css('div#learning-outcomes ol li::text').getall()
@@ -122,10 +123,7 @@ class SubjectsSpider(scrapy.Spider):
 
 
     def parseSubjectAss(self, response, sspost):
-
-        from scrapy.shell import inspect_response
-        inspect_response(response, self)
-        assessments = []
+        sspost['assessments'] = []
 
         for ass in response.css('div.assessment-table table tbody tr'):
             ass_item = {}
@@ -134,41 +132,32 @@ class SubjectsSpider(scrapy.Spider):
             columns = ass.css('td::text').getall()
             if description:
                 ass_item["description"] = description.strip()
-                if len(columns) == 2:
-                    ass_item["timing"] = columns[0].strip()
-                    ass_item["percentage"] = columns[1].strip()
-                else:
-                    ass_item["timing"] = None
-                    ass_item["percentage"] = columns[0].strip()
+                ass_item["percentage"] = columns[-1].strip()
             else:
                 ass_item["description"] = columns[0].strip()
-                if len(columns) == 3:
-                    ass_item["timing"] = columns[1].strip()
-                    ass_item["percentage"] = columns[2].strip()
-                else:
-                    ass_item["timing"] = None
-                    ass_item["percentage"] = columns[1].strip()
+                ass_item["percentage"] = columns[-1].strip()
+            sspost['assessments'].append(ass_item)
 
-
-            assessments.append(ass_item)
-
-        sspost['assessments'] = assessments
-
-        dnt_page = response.css('div.layout-sidebar__side__inner ul li a::attr(href)').getall()[3]
-
-        yield response.follow(dnt_page, self.parseSubjectDNT, cb_kwargs=dict(sspost=sspost))
-
-
+        try:
+            dnt_page = response.css('div.layout-sidebar__side__inner ul li a::attr(href)').getall()[3]
+            yield response.follow(dnt_page, self.parseSubjectDNT, cb_kwargs=dict(sspost=sspost))
+        except IndexError:
+            yield sspost
 
     def parseSubjectDNT(self, response, sspost):
         sspost['date_and_time'] = []
         for term in response.css('ul.accordion li'):
             date = {}
-            date["term_name"] = term.css("div.accordion__title::text").get()
-            date["contact_details"] = term.css("div.course__body__inner__contact_details p a ::text").getall()
-            # Add each lines in the table into a dictionary
-            for line in term.css('div table tbody tr'):
-                date[line.css("th::text").get()] = line.css("td::text").get()
-            sspost['date_and_time'].append(date)
+            term_name = term.css("div.accordion__title::text").get()
+            if term_name:
+                date["term"] = term_name
+                date["contact_email"] = term.css("div.course__body__inner__contact_details p a ::text").getall()
+                # Add each lines in the table into a dictionary
+                for line in term.css('div table tbody tr'):
+                    name = re.sub('[- ]', '_', line.css("th::text").get().lower())
+                    date[name.strip()] = line.css("td::text").get()
+                sspost['date_and_time'].append(date)
+
+
 
         yield sspost
