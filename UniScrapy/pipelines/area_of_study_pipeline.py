@@ -1,8 +1,10 @@
+import json
 import logging
 from datetime import datetime
 
 import pymongo
 import pytz
+import requests
 from neomodel import config
 from scrapy.exceptions import DropItem
 
@@ -11,36 +13,32 @@ from UniScrapy.neo4j.model.subject import Subject
 
 class AreaOfStudyPipeline(object):
 
-    collection_name = 'area_of_study'
 
-    def __init__(self,  mongo_uri, mongo_db):
-        self.mongo_uri = mongo_uri
-        self.mongo_db = mongo_db
+    def __init__(self):
+        pass
 
     @classmethod
     def from_crawler(cls, crawler):
-        return cls(
-            mongo_uri = crawler.settings.get('MONGO_URI'),
-            mongo_db = crawler.settings.get('MONGO_DATABASE')
-        )
+        return cls()
 
     def open_spider(self, spider):
-        self.client = pymongo.MongoClient(self.mongo_uri)
-        self.db = self.client[self.mongo_db]
+        pass
 
     def close_spider(self, spider):
-        self.client.close()
+        pass
 
     def process_item(self, item, spider):
-        self.save_item(item)
+        self.save_study_area(item, spider)
 
     def validate_item(self, item):
         pass
 
-    def save_item(self, item):
+    def save_study_area(self, item, spider):
         item = dict(item)
-        self.db[self.collection_name].insert_one(item)
-        return item
+        headers = {'content-type': 'application/json'}
+        response = requests.post(url="https://e7r6quilrh.execute-api.ap-southeast-2.amazonaws.com/dev/api/v1/study-areas/", data=json.dumps(item), headers=headers)
+        if response.status_code != 200:
+            logging.error(response.json()["message"])
 
 
 class DuplicatesPipeline(object):
