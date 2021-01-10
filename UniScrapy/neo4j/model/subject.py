@@ -17,6 +17,7 @@ class Subject(StructuredNode):
     area_of_study = StringProperty(required=True)
     credit = FloatProperty()
     type = StringProperty()
+    availability = ArrayProperty(StringProperty())
     prerequisites = Relationship('Subject', 'PREREQUISITES', model=SubjectRel)
     corequisites = Relationship('Subject', 'COREQUISITES', model=SubjectRel)
 

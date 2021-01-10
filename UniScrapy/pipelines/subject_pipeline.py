@@ -7,8 +7,6 @@ import pytz
 from neomodel import config
 from scrapy.exceptions import DropItem
 from scrapy.exporters import CsvItemExporter
-
-from UniScrapy.models.Subject import SubjectModel
 from UniScrapy.neo4j.model.subject import Subject
 
 import requests
@@ -26,8 +24,6 @@ class SubjectPipeline(object):
 
     def open_spider(self, spider):
         config.DATABASE_URL = self.neo4j_connection_string  # default
-        if not SubjectModel.exists():
-            SubjectModel.create_table(read_capacity_units=1, write_capacity_units=20, wait=True)
 
     def close_spider(self, spider):
         return
