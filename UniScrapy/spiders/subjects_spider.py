@@ -94,11 +94,14 @@ class SubjectsSpider(scrapy.Spider):
         for term in response.css('div.course__overview-box table tr td div::text'):
             # Extract "Semester 1" from "Semester 1 (Extended) - Online"
             # Also see https://stackoverflow.com/questions/42526951/regex-to-match-text-but-not-if-contained-in-brackets
-            result = re.search(r"(?<!\()\b[A-Za-z0-9 ]*\b(?![\w\s]*[\)])", term.get())
-            if (result):
-                # Only save the first matched group
-                sspost['availability'].append(result.group())
-        print(sspost['availability'])
+            term_name = term.get()
+            if (term_name == "Time-based Research"):
+                sspost['availability'].append(term_name)
+            else:
+                result = re.search(r"(?<!\()\b[A-Za-z0-9 ]*\b(?![\w\s]*[\)])", term_name)
+                if (result):
+                    # Only save the first matched group
+                    sspost['availability'].append(result.group())
         # Get the 'eligibility and requirements page'
 
         req_page = response.css('div.layout-sidebar__side__inner ul li a::attr(href)').getall()[1]

@@ -36,7 +36,7 @@ class AreaOfStudyPipeline(object):
     def save_study_area(self, item, spider):
         item = dict(item)
         headers = {'content-type': 'application/json'}
-        response = requests.post(url="https://e7r6quilrh.execute-api.ap-southeast-2.amazonaws.com/dev/api/v1/study-areas/", data=json.dumps(item), headers=headers)
+        response = requests.post(url="https://e7r6quilrh.execute-api.ap-southeast-2.amazonaws.com/dev/api/v1/graph/options/study-areas/", data=json.dumps(item), headers=headers)
         if response.status_code != 200:
             logging.error(response.json()["message"])
 
