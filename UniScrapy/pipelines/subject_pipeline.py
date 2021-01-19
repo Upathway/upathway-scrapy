@@ -49,9 +49,15 @@ class SubjectPipeline(object):
 
         subject_node = Subject.nodes.get_or_none(code=item["code"])
         # # attach tags then create a new node
+        item = self.attach_tags(item, spider)
+
         if not subject_node:
-            item = self.attach_tags(item, spider)
-            subject_node = Subject(**item).save()
+            subject_node = Subject(**item)
+
+        subject_node.level = item["level"]
+        subject_node.area_of_study = item["area_of_study"]
+        subject_node.availability = item["availability"]
+        subject_node.save()
 
         self.save_subject(item, spider)
         # self.save_to_es(item, spider)
@@ -64,7 +70,6 @@ class SubjectPipeline(object):
             pre_node = Subject.nodes.get_or_none(code=pre["code"])
             # if None is present, create a new node as a placeholder
             if not pre_node:
-                pre = self.attach_tags(pre, spider)
                 pre_node = Subject(**pre).save()
             # connect nodes as prerequisites
             subject_node.prerequisites.connect(pre_node)
