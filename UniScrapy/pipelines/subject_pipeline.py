@@ -48,15 +48,16 @@ class SubjectPipeline(object):
         prerequisites = item.pop('prerequisites', None)
 
         subject_node = Subject.nodes.get_or_none(code=item["code"])
-        # attach tags then create a new node
+        # # attach tags then create a new node
         if not subject_node:
             item = self.attach_tags(item, spider)
             subject_node = Subject(**item).save()
 
         self.save_subject(item, spider)
-        # self.save_assessment(item, spider)
-        # self.save_date_and_time(item, spider)
-
+        # self.save_to_es(item, spider)
+        # # self.save_assessment(item, spider)
+        # # self.save_date_and_time(item, spider)
+        #
         # TODO: use batch operation instead of for loop
         for pre in prerequisites:
             # find matching node by subject code and name
@@ -81,6 +82,10 @@ class SubjectPipeline(object):
         response = requests.post(url="https://e7r6quilrh.execute-api.ap-southeast-2.amazonaws.com/dev/api/v1/subjects/", data=json.dumps(item), headers=headers)
         if response.status_code != 200:
             logging.error(response.json()["message"])
+
+    def save_to_es(self, item, spider):
+        headers = {'content-type': 'application/json'}
+        response = requests.put(url="http://localhost/es/subject/subject/" + item["code"], data=json.dumps(item), headers=headers)
 
 
 class DuplicatesPipeline(object):

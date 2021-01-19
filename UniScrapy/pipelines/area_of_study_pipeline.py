@@ -1,5 +1,6 @@
 import json
 import logging
+import re
 from datetime import datetime
 
 import pymongo
@@ -28,6 +29,11 @@ class AreaOfStudyPipeline(object):
         pass
 
     def process_item(self, item, spider):
+        item = dict(item)
+        result = re.search(r"(?<!\()\b[A-Za-z0-9 ]*\b(?![\w\s]*[)])", item["name"])
+        if (result):
+            item['name'] = result.group()
+
         self.save_study_area(item, spider)
 
     def validate_item(self, item):
