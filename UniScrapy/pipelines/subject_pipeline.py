@@ -86,7 +86,8 @@ class SubjectPipeline(object):
         headers = {'content-type': 'application/json'}
         response = requests.post(url="https://e7r6quilrh.execute-api.ap-southeast-2.amazonaws.com/dev/api/v1/subjects/", data=json.dumps(item), headers=headers)
         if response.status_code != 200:
-            logging.error(response.json()["message"])
+            logging.error(response.json())
+            # print(response.json())
 
     def save_to_es(self, item, spider):
         headers = {'content-type': 'application/json'}
