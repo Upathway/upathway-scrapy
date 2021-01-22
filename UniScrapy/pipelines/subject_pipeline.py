@@ -1,94 +1,62 @@
 import json
 import logging
-from datetime import datetime
-
-import pymongo
-import pytz
 import treq
-from neomodel import config, clear_neo4j_database, db
 from scrapy.exceptions import DropItem
-from scrapy.exporters import CsvItemExporter
 from twisted.internet import defer
-
-from UniScrapy.neo4j.model.subject import Subject
-
-import requests
+logger = logging.getLogger(__name__)
 
 class SubjectPipeline(object):
 
-    def __init__(self, neo4j_connection_string):
-        self.neo4j_connection_string = neo4j_connection_string
+    def __init__(self, server_endpoint):
+        self.server_endpoint = server_endpoint
 
     @classmethod
     def from_crawler(cls, crawler):
         return cls(
-            neo4j_connection_string=crawler.settings.get('NEO4J_CONNECTION_STRING'),
+            server_endpoint=crawler.settings.get('SERVER_ENDPOINT'),
         )
 
     def open_spider(self, spider):
-        config.DATABASE_URL = self.neo4j_connection_string  # default
-        # drop existing nodes and relation in neo4j
-        clear_neo4j_database(db)
-
+        return
 
     def close_spider(self, spider):
         return
 
-    def remove_duplication(self, item, spider):
-        item["availability"] = list(dict.fromkeys(item["availability"]))
-        item["intended_learning_outcome"] = list(dict.fromkeys(item["intended_learning_outcome"]))
-        item["generic_skills"] = list(dict.fromkeys(item["generic_skills"]))
-        return item
-
-    def convert_credit_to_float(self, item, spider):
-        if "credit" in item and item["credit"]:
-            item["credit"] = float(item["credit"])
+    def process_item(self, item, spider):
+        item = dict(item)
+        code = item["code"]
+        self.save_subject(item)
+        self.save_subject_term(code, item["date_and_time"])
+        self.save_assessment(code, item["assessments"])
         return item
 
     @defer.inlineCallbacks
-    def process_item(self, item, spider):
-        item = dict(item)
-        item = self.remove_duplication(item, spider)
-        item = self.convert_credit_to_float(item, spider)
+    def save_subject_term(self, code, terms):
+        data = json.dumps(terms).encode("utf-8")
+        headers = {'content-type': 'application/json'}
+        logger.info("{} terms(s) saved for {}".format(len(terms), code))
+        yield treq.post(url=self.server_endpoint +  "/subjects/{}/terms/".format(code),
+                        data=data,
+                        headers=headers)
+    @defer.inlineCallbacks
+    def save_assessment(self, code, assessments):
+        data = json.dumps(assessments).encode("utf-8")
+        headers = {'content-type': 'application/json'}
+        logger.info("{} assessment(s) saved for {}".format(len(assessments), code))
 
-        # pop prerequisites from dict as we model prerequisites as relationship in neo4j
-        prerequisites = item.pop('prerequisites', None)
+        yield treq.post(url=self.server_endpoint + "/subjects/{}/assessments/".format(code),
+                        data=data,
+                        headers=headers)
 
-        subject_node = Subject.nodes.get_or_none(code=item["code"])
-        # # attach tags then create a new node
-        item = self.attach_tags(item, spider)
 
-        if not subject_node:
-            subject_node = Subject(**item)
-
-        subject_node.level = item["level"]
-        subject_node.area_of_study = item["area_of_study"]
-        subject_node.availability = item["availability"]
-        subject_node.save()
-
+    @defer.inlineCallbacks
+    def save_subject(self, item):
         data = json.dumps(item).encode("utf-8")
         headers = {'content-type': 'application/json'}
-        yield treq.post(url="https://e7r6quilrh.execute-api.ap-southeast-2.amazonaws.com/dev/api/v1/subjects/", data=data, headers=headers)
-        logging.info("Subject {} ({}) saved".format(item["name"], item["code"]))
-        # TODO: use batch operation instead of for loop
-        for pre in prerequisites:
-            # find matching node by subject code and name
-            pre_node = Subject.nodes.get_or_none(code=pre["code"])
-            # if None is present, create a new node as a placeholder
-            if not pre_node:
-                pre_node = Subject(**pre).save()
-            # connect nodes as prerequisites
-            subject_node.prerequisites.connect(pre_node)
+        logger.info("Subject {} ({}) saved".format(item["name"], item["code"]))
+        yield treq.post(url=self.server_endpoint+"/subjects/", data=data, headers=headers)
 
-        return item
-
-    def attach_tags(self, item, spider):
-        item = dict(item)
-        item["level"] = int(item["code"][4])
-        item["area_of_study"] = item["code"][0:4]
-        return item
-
-    def save_to_es(self, item, spider):
+    def save_to_es(self, item):
         data = json.dumps(item).encode("utf-8")
         headers = {'content-type': 'application/json'}
         yield treq.put(url="http://localhost/es/subject/subject/", data=data, headers=headers)

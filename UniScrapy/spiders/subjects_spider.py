@@ -1,22 +1,22 @@
 import os
 import scrapy
 from scrapy.http import Response
-
+import logging
 import re
-from scrapy.crawler import CrawlerProcess
-from scrapy.utils.project import get_project_settings
-from neomodel import db, clear_neo4j_database
-
 from UniScrapy.items.subject_item import Subject
+logger = logging.getLogger(__name__)
 
 
 class SubjectsSpider(scrapy.Spider):
     name = "subjects"
     custom_settings = {
         "NEO4J_CONNECTION_STRING": os.environ.get('NEO4J_CONNECTION_STRING'),
+        "SERVER_ENDPOINT": os.environ.get('SERVER_ENDPOINT'),
         "ITEM_PIPELINES": {
             'UniScrapy.pipelines.subject_pipeline.DuplicatesPipeline': 100,
+            'UniScrapy.pipelines.unique_list_pipeline.UniqueListPipeline': 200,
             'UniScrapy.pipelines.subject_pipeline.SubjectPipeline': 300,
+            'UniScrapy.pipelines.neo4j_pipeline.Neo4jPipeline': 300,
         }
     }
 
@@ -58,8 +58,13 @@ class SubjectsSpider(scrapy.Spider):
 
         details = response.css('p.header--course-and-subject__details span::text').getall()
         credit_match = re.match(r"Points: (\d*\.?\d*)", details[1])
-        if credit_match:
-            sspost["credit"] = credit_match.group(1)
+
+        try:
+            if credit_match:
+                sspost["credit"] = float(credit_match.group(1))
+        except:
+            logger.error("Failed to convert {} to float".format(credit_match.group(1)))
+
 
         sspost["type"] = details[0]
 
@@ -110,7 +115,7 @@ class SubjectsSpider(scrapy.Spider):
         prerequisites = []
 
         for subject in response.css('div#prerequisites table tr'):
-            related_dic = {}
+            related_dic = dict()
             relate = subject.css('td::text').get()
             names = subject.css('td a::text').get()
             if relate and names:
@@ -135,7 +140,7 @@ class SubjectsSpider(scrapy.Spider):
         sspost['assessments'] = []
 
         for ass in response.css('div.assessment-table table tbody tr'):
-            ass_item = {}
+            ass_item =dict()
             description = ass.css('td p::text').get()
             # if have description wrapped in p, then it is a regular assessment
             columns = ass.css('td::text').getall()
@@ -156,7 +161,7 @@ class SubjectsSpider(scrapy.Spider):
     def parseSubjectDNT(self, response, sspost):
         sspost['date_and_time'] = []
         for term in response.css('ul.accordion li'):
-            date = {}
+            date = dict()
             term_name = term.css("div.accordion__title::text").get()
             if term_name:
                 date["term"] = term_name
