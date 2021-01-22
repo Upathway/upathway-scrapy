@@ -25,6 +25,7 @@ class SubjectPipeline(object):
     def process_item(self, item, spider):
         item = dict(item)
         code = item["code"]
+        # logger.info(item)
         self.save_subject(item)
         self.save_subject_term(code, item["date_and_time"])
         self.save_assessment(code, item["assessments"])

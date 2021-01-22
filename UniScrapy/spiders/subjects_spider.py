@@ -46,27 +46,34 @@ class SubjectsSpider(scrapy.Spider):
         
         sspost = Subject()
         # Extract the subject information
-        # header = response.css('span.header--course-and-subject__main ::text').getall()[0]
-        # result = re.search(r"([A-Za-z0-9 ]+) \(([A-Za-z0-9_]+)\)", header)
-        # sspost['name'] = result.group(1).strip()
-        # sspost['code'] = result.group(2).strip()
 
-        name = response.css('title::text').get().split(' ')
-        sspost['name'] = ' '.join(name[0:-7])
-        sspost['code'] = name[-7][1:-1]
+        sspost['name'] = response.css("meta[name=short_title]::attr(content)").get()
+        sspost['code'] = response.css("meta[name=code]::attr(content)").get()
+        points = response.css("meta[name=points]::attr(content)").get()
+        if (points):
+            sspost['points'] = float(points)
+
+
+        sspost['type'] = response.css("meta[name=type]::attr(content)").get()
+        year = response.css("meta[name=year]::attr(content)").get()
+        if (year):
+            sspost['year'] = int(year)
+
+        sspost['level'] = response.css("meta[name=level]::attr(content)").get()
+        sspost['eligibility_and_requirements_url'] = response.css("meta[name=eligibility_and_requirements]::attr(content)").get()
+        sspost['assessment_url'] = response.css("meta[name=assessment]::attr(content)").get()
+        sspost['dates_and_times_url'] = response.css("meta[name=dates_and_times]::attr(content)").get()
+        sspost['further_information_url'] = response.css("meta[name=further_information]::attr(content)").get()
         sspost['handbook_url'] = response.url
 
-        details = response.css('p.header--course-and-subject__details span::text').getall()
-        credit_match = re.match(r"Points: (\d*\.?\d*)", details[1])
+        # The old way of getting code and name from page titel
+        # name = response.css('title::text').get().split(' ')
+        # sspost['name'] = ' '.join(name[0:-7])
+        # sspost['code'] = name[-7][1:-1]
 
-        try:
-            if credit_match:
-                sspost["credit"] = float(credit_match.group(1))
-        except:
-            logger.error("Failed to convert {} to float".format(credit_match.group(1)))
-
-
-        sspost["type"] = details[0]
+        # The old way of getting type
+        # details = response.css('p.header--course-and-subject__details span::text').getall()
+        # sspost["type"] = details[0]
 
         overview = response.css('div.course__overview-wrapper p::text').get()
         if overview:
