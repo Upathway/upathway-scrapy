@@ -4,9 +4,12 @@ from datetime import datetime
 
 import pymongo
 import pytz
-from neomodel import config
+import treq
+from neomodel import config, clear_neo4j_database, db
 from scrapy.exceptions import DropItem
 from scrapy.exporters import CsvItemExporter
+from twisted.internet import defer
+
 from UniScrapy.neo4j.model.subject import Subject
 
 import requests
@@ -24,6 +27,9 @@ class SubjectPipeline(object):
 
     def open_spider(self, spider):
         config.DATABASE_URL = self.neo4j_connection_string  # default
+        # drop existing nodes and relation in neo4j
+        clear_neo4j_database(db)
+
 
     def close_spider(self, spider):
         return
@@ -39,6 +45,7 @@ class SubjectPipeline(object):
             item["credit"] = float(item["credit"])
         return item
 
+    @defer.inlineCallbacks
     def process_item(self, item, spider):
         item = dict(item)
         item = self.remove_duplication(item, spider)
@@ -59,11 +66,10 @@ class SubjectPipeline(object):
         subject_node.availability = item["availability"]
         subject_node.save()
 
-        self.save_subject(item, spider)
-        # self.save_to_es(item, spider)
-        # # self.save_assessment(item, spider)
-        # # self.save_date_and_time(item, spider)
-        #
+        data = json.dumps(item).encode("utf-8")
+        headers = {'content-type': 'application/json'}
+        yield treq.post(url="https://e7r6quilrh.execute-api.ap-southeast-2.amazonaws.com/dev/api/v1/subjects/", data=data, headers=headers)
+        logging.info("Subject {} ({}) saved".format(item["name"], item["code"]))
         # TODO: use batch operation instead of for loop
         for pre in prerequisites:
             # find matching node by subject code and name
@@ -82,17 +88,10 @@ class SubjectPipeline(object):
         item["area_of_study"] = item["code"][0:4]
         return item
 
-    def save_subject(self, item, spider):
-        headers = {'content-type': 'application/json'}
-        response = requests.post(url="https://e7r6quilrh.execute-api.ap-southeast-2.amazonaws.com/dev/api/v1/subjects/", data=json.dumps(item), headers=headers)
-        if response.status_code != 200:
-            logging.error(response.json())
-            # print(response.json())
-
     def save_to_es(self, item, spider):
+        data = json.dumps(item).encode("utf-8")
         headers = {'content-type': 'application/json'}
-        response = requests.put(url="http://localhost/es/subject/subject/" + item["code"], data=json.dumps(item), headers=headers)
-
+        yield treq.put(url="http://localhost/es/subject/subject/", data=data, headers=headers)
 
 class DuplicatesPipeline(object):
 

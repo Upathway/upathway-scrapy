@@ -1,21 +1,18 @@
 import os
-import re
-from collections import Set
-
 import scrapy
-import logging
-
 from scrapy.http import Response
 
-from UniScrapy.items.subject_item import Subject
 import re
+from scrapy.crawler import CrawlerProcess
+from scrapy.utils.project import get_project_settings
+from neomodel import db, clear_neo4j_database
+
+from UniScrapy.items.subject_item import Subject
 
 
 class SubjectsSpider(scrapy.Spider):
     name = "subjects"
     custom_settings = {
-        "MONGO_URI": os.environ.get('MONGO_URI'),
-        "MONGO_DATABASE": os.environ.get('MONGO_DATABASE'),
         "NEO4J_CONNECTION_STRING": os.environ.get('NEO4J_CONNECTION_STRING'),
         "ITEM_PIPELINES": {
             'UniScrapy.pipelines.subject_pipeline.DuplicatesPipeline': 100,
@@ -169,7 +166,4 @@ class SubjectsSpider(scrapy.Spider):
                     name = re.sub('[- ]', '_', line.css("th::text").get().lower())
                     date[name.strip()] = line.css("td::text").get()
                 sspost['date_and_time'].append(date)
-
-
-
         yield sspost
