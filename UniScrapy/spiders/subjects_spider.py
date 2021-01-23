@@ -131,12 +131,10 @@ class SubjectsSpider(scrapy.Spider):
                 related_dic['name'] = name
                 related_dic['code'] = code
                 prerequisites.append(related_dic)
+                yield response.follow("https://handbook.unimelb.edu.au/2021/subjects/"+code, callback=self.parseSubjectHome)
+
 
         sspost['prerequisites'] = prerequisites
-
-        for link in response.css('div#prerequisites table tr a::attr(href)').getall():
-            yield response.follow(link, callback=self.parseSubjectHome)
-
         ass_page = response.css('div.layout-sidebar__side__inner ul li a::attr(href)').getall()[2]
 
         yield response.follow(ass_page, self.parseSubjectAss, cb_kwargs=dict(sspost=sspost))
