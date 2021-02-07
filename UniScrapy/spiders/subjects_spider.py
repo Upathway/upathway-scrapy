@@ -21,11 +21,10 @@ class SubjectsSpider(scrapy.Spider):
     }
 
     start_urls = [
-        # All subjects
-        "https://handbook.unimelb.edu.au/search?types%5B%5D=subject&year=2021&level_type%5B%5D=all&campus_and_attendance_mode%5B%5D=all&org_unit%5B%5D=all&page=1&sort=_score%7Cdesc"
-        #  All 2021 CIS and Maths subjects
-        # "https://handbook.unimelb.edu.au/search?types%5B%5D=subject&year=2021&subject_level_type%5B%5D=all&study_periods%5B%5D=all&area_of_study%5B%5D=all&org_unit%5B%5D=4180&org_unit%5B%5D=6200&campus_and_attendance_mode%5B%5D=all&page=1&sort=_score%7Cdesc"
+        "https://handbook.unimelb.edu.au/search?types%5B%5D=subject&year=2021&subject_level_type%5B%5D=all&study_periods%5B%5D=all&area_of_study%5B%5D=all&org_unit%5B%5D=all&campus_and_attendance_mode%5B%5D=all&page=1&sort=external_code%7Casc"
     ]
+    page_count = 0
+    subject_count = 0
 
     def parse(self, response):
 
@@ -34,9 +33,11 @@ class SubjectsSpider(scrapy.Spider):
 
         # join the links and then parse each subjects
         for subject in subjects_list:
+            self.subject_count += 1
             yield response.follow(subject, callback=self.parseSubjectHome)
         
         next_page = response.urljoin(response.css("div#search-results div.search-context span.next a::attr(href)").get())
+        self.page_count += 1
 
         if next_page:
             yield response.follow(next_page, callback=self.parse)
@@ -59,7 +60,7 @@ class SubjectsSpider(scrapy.Spider):
         if (year):
             sspost['year'] = int(year)
 
-        sspost['level'] = response.css("meta[name=level]::attr(content)").get()
+        sspost['level'] = int(sspost['name'][4])
         sspost['eligibility_and_requirements_url'] = response.css("meta[name=eligibility_and_requirements]::attr(content)").get()
         sspost['assessment_url'] = response.css("meta[name=assessment]::attr(content)").get()
         sspost['dates_and_times_url'] = response.css("meta[name=dates_and_times]::attr(content)").get()
@@ -87,9 +88,9 @@ class SubjectsSpider(scrapy.Spider):
         for skill in response.css('div#generic-skills ul.ticked-list'):
             strong = skill.css("li strong::text").get()
             text = skill.css("li::text").get()
-            if strong:
-                text = strong + text
             if text:
+                if strong:
+                    text = strong + text
                 skills.append(text.strip())
 
         for skill in response.css('div#generic-skills ol'):
