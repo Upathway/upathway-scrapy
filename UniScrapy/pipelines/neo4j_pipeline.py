@@ -44,7 +44,7 @@ class Neo4jPipeline(object):
             subject_node = Subject(**item)
 
         subject_node.level = item["level"]
-        subject_node.area_of_study = item["area_of_study"]
+        subject_node.prefix = item["prefix"]
         subject_node.availability = item["availability"]
         subject_node.save()
         logger.info("Node {} added".format(item["code"]))
@@ -63,8 +63,7 @@ class Neo4jPipeline(object):
 
     def attach_tags(self, item):
         item = dict(item)
-        item["level"] = int(item["code"][4])
-        item["area_of_study"] = item["code"][0:4]
+        item["prefix"] = item["code"][0:4]
         return item
 
 class DuplicatesPipeline(object):

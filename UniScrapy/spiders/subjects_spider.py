@@ -60,7 +60,7 @@ class SubjectsSpider(scrapy.Spider):
         if (year):
             sspost['year'] = int(year)
 
-        sspost['level'] = int(sspost['name'][4])
+        sspost['level'] = int(sspost['code'][4])
         sspost['eligibility_and_requirements_url'] = response.css("meta[name=eligibility_and_requirements]::attr(content)").get()
         sspost['assessment_url'] = response.css("meta[name=assessment]::attr(content)").get()
         sspost['dates_and_times_url'] = response.css("meta[name=dates_and_times]::attr(content)").get()

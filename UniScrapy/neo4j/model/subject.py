@@ -14,7 +14,7 @@ class Subject(StructuredNode):
     code = StringProperty(unique_index=True, required=True)
     name = StringProperty(unique_index=True, required=True)
     level = IntegerProperty()
-    area_of_study = StringProperty()
+    prefix = StringProperty()
     credit = FloatProperty()
     type = StringProperty()
     availability = ArrayProperty(StringProperty())
